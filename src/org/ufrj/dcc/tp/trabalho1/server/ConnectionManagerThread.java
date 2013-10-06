@@ -1,7 +1,8 @@
 package org.ufrj.dcc.tp.trabalho1.server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.InputStreamReader;
 import java.net.Socket;
 
 //Thread que gerencia a conexao com um socket. Vai enviar/receber as mensagens de/para um cliente.
@@ -14,7 +15,7 @@ public class ConnectionManagerThread extends Thread {
 	private Server server;
 	private Socket socket;
 	
-	private ObjectInputStream in;
+	private BufferedReader in;
 	
 	public ConnectionManagerThread(Server server, Socket socket) throws IOException{
 		this.server = server;
@@ -22,8 +23,9 @@ public class ConnectionManagerThread extends Thread {
 		
 		try{
 			while (true){
-				in = new ObjectInputStream(socket.getInputStream());
-				String message = (String)in.readObject();
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				String message = in.readLine();
+				System.out.println(message);
 				if (message.equals(GOODBYE_MSG)){
 					this.closeSocket();
 					break;

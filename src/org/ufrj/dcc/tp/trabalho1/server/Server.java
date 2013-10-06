@@ -14,7 +14,7 @@ public class Server {
 	private int port;
 	private ServerSocket serverSocket;
 	private List<Socket> connectedClients = new ArrayList<Socket>();
-	
+
 	public Server(int port){
 		this.port=port;
 	}
@@ -39,8 +39,16 @@ public class Server {
 	}
 
 	public void sendToConnectedClients(String message) {
-		// SEND MESSAGE TO CONNECTED CLIENTS
-		
+		for (Socket clientSocket : connectedClients) {
+			try {
+				PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+				out.write(message);
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public List<Socket> getConnectedClients() {
