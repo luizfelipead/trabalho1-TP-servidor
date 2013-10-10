@@ -1,9 +1,8 @@
 package org.ufrj.dcc.tp.trabalho1.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.Scanner;
 
 //Thread que gerencia a conexao com um socket. Vai enviar/receber as mensagens de/para um cliente.
 public class ConnectionManagerThread extends Thread {
@@ -15,31 +14,41 @@ public class ConnectionManagerThread extends Thread {
 	private Server server;
 	private Socket socket;
 	
-	private BufferedReader in;
+	private Scanner in;
 	
 	public ConnectionManagerThread(Server server, Socket socket) throws IOException{
 		this.server = server;
 		this.socket = socket;
+		in = new Scanner(socket.getInputStream());
 		
+	}
+	
+	@Override
+	public void run(){
 		try{
+			
 			while (true){
-				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				String message = in.readLine();
-				System.out.println(message);
-				if (message.equals(GOODBYE_MSG)){
-					this.closeSocket();
-					break;
+				while(in.hasNextLine()){
+					String message = in.nextLine();
+					System.out.println(message);
+					if (message.equals(GOODBYE_MSG)){
+						this.closeSocket();
+						//TODO remover da lista
+						break;
+					}
+					//server.sendToConnectedClients(message);
 				}
-				server.sendToConnectedClients(message);
 			}
 		} catch (Exception e){
 			e.printStackTrace();
-		} finally {
-			in.close();
-			socket.close();
 			server.getConnectedClients().remove(this);
+			try {
+				socket.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			in.close();
 		}
-		
 	}
 
 	private void closeSocket() throws IOException {

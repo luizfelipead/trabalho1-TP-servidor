@@ -1,9 +1,7 @@
 package org.ufrj.dcc.tp.trabalho1.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -28,7 +26,8 @@ public class Server {
 				Socket clientSocket = serverSocket.accept();
 				System.out.println("Connection estabilished from: "+clientSocket.getInetAddress());
 				connectedClients.add(clientSocket);
-				(new ConnectionManagerThread(this, clientSocket)).start();
+				ConnectionManagerThread connectionManagerThread = new ConnectionManagerThread(this, clientSocket);
+				connectionManagerThread.start();
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -41,8 +40,8 @@ public class Server {
 	public void sendToConnectedClients(String message) {
 		for (Socket clientSocket : connectedClients) {
 			try {
-				PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-				out.write(message);
+				PrintStream out = new PrintStream(clientSocket.getOutputStream());
+				out.println(message);
 				out.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
