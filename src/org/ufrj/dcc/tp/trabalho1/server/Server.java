@@ -7,56 +7,54 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gson.Gson;
-
 public class Server {
 	
 	private int port;
 	private ServerSocket serverSocket;
-	private List<ClientMessageReceiverThread> connectedClients = new ArrayList<ClientMessageReceiverThread>();
-	private static final Gson GSON = new Gson();
-	
+	private List<Socket> connectedClients = new ArrayList<Socket>();
+
 	public Server(int port){
 		this.port=port;
 	}
 	
 	public void init() throws IOException{
-		System.out.println("[INFO] Starting server...");
+		System.out.println("Starting server...");
 		try {
 			serverSocket = new ServerSocket(this.port);
-			System.out.println("[INFO] Server successfully started at "+serverSocket.getInetAddress().getHostAddress());
-			int idCounter = 1;
+			System.out.println("Server successfully started at "+serverSocket.getLocalSocketAddress());
 			while (true){
 				Socket clientSocket = serverSocket.accept();
-				System.out.println("[INFO] Connection estabilished with a client. ID: "+idCounter+". Connection from: "+clientSocket.getInetAddress());
-				ChatMessage joinedMessage = new ChatMessage(0, "ID<"+idCounter+"> acabou de se conectar!");
-				sendToConnectedClients(joinedMessage);
-				ClientMessageReceiverThread connectionManagerThread = new ClientMessageReceiverThread(idCounter++, this, clientSocket);
-				connectedClients.add(connectionManagerThread);
+				System.out.println("Connection estabilished from: "+clientSocket.getInetAddress());
+				connectedClients.add(clientSocket);
+				ConnectionManagerThread connectionManagerThread = new ConnectionManagerThread(this, clientSocket);
 				connectionManagerThread.start();
 			}
 		} catch (IOException e) {
-			System.out.println("[ERROR] Connection error");
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			serverSocket.close();
 		}
 	}
 
-	public void sendToConnectedClients(ChatMessage message) {
-		for (ClientMessageReceiverThread client : connectedClients) {
+	public void sendToConnectedClients(String message) {
+		for (Socket clientSocket : connectedClients) {
 			try {
-				PrintStream out = new PrintStream(client.getSocket().getOutputStream());
-				out.println(GSON.toJson(message));
+				PrintStream out = new PrintStream(clientSocket.getOutputStream());
+				out.println(message);
 				out.close();
 			} catch (IOException e) {
-				System.out.println("[ERROR] Could not close PrintStream from client ID: "+client.getClientId());
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
 
-	public List<ClientMessageReceiverThread> getConnectedClients() {
+	public List<Socket> getConnectedClients() {
 		return connectedClients;
 	}
 
-	public void setConnectedClients(List<ClientMessageReceiverThread> connectedClients) {
+	public void setConnectedClients(List<Socket> connectedClients) {
 		this.connectedClients = connectedClients;
 	}
 	
