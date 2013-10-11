@@ -1,7 +1,6 @@
 package org.ufrj.dcc.tp.trabalho1.server;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -29,7 +28,7 @@ public class Server {
 			while (true){
 				Socket clientSocket = serverSocket.accept();
 				System.out.println("[INFO] Connection estabilished with a client. ID: "+idCounter+". Connection from: "+clientSocket.getInetAddress());
-				ChatMessage joinedMessage = new ChatMessage(0, "<ID:"+idCounter+"> acabou de se conectar!");
+				ChatMessage joinedMessage = new ChatMessage(0, "<ID:"+idCounter+"> acabou de se conectar!", ChatMessage.PUBLIC_MESSAGE);
 				sendToConnectedClients(joinedMessage);
 				ClientMessageReceiverThread connectionManagerThread = new ClientMessageReceiverThread(idCounter++, this, clientSocket);
 				connectedClients.add(connectionManagerThread);
@@ -53,7 +52,4 @@ public class Server {
 	public void setConnectedClients(List<ClientMessageReceiverThread> connectedClients) {
 		this.connectedClients = connectedClients;
 	}
-	
-	
-
 }
