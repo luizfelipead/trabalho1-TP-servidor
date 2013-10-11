@@ -1,16 +1,14 @@
 package org.ufrj.dcc.tp.trabalho1.server;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Scanner;
-
-import com.google.gson.Gson;
 
 //Thread que gerencia a conexao com um socket. Vai enviar/receber as mensagens de/para um cliente.
 public class ClientMessageReceiverThread extends Thread {
 	
 	private static final String GOODBYE_MSG = "EXIT";
-	private static final Gson GSON = new Gson();
 	
 	//Armazeno o servidor criador da thread para manipular a sua lista de clientes conectados, 
 	//alem de enviar uma mensagens a todos os clientes conectados
@@ -19,15 +17,25 @@ public class ClientMessageReceiverThread extends Thread {
 	private int clientId;
 
 	private Scanner in;
+	private PrintStream out;
 	
 	public ClientMessageReceiverThread(int id, Server server, Socket socket) throws IOException{
 		this.server = server;
 		this.socket = socket;
 		this.setClientId(id);
 		in = new Scanner(socket.getInputStream());
+		out = new PrintStream(socket.getOutputStream(),true);
 		
 	}
 	
+	public PrintStream getOut() {
+		return out;
+	}
+
+	public void setOut(PrintStream out) {
+		this.out = out;
+	}
+
 	public int getClientId() {
 		return clientId;
 	}
@@ -62,12 +70,12 @@ public class ClientMessageReceiverThread extends Thread {
 					server.sendToConnectedClients(chatMessage);
 				}
 			}
-		
 	}
 
 	private void closeSocket() throws IOException {
 		System.out.println("[INFO] Closing connection for client ID "+ getClientId());
 		in.close();
+		out.close();
 		server.getConnectedClients().remove(this);
 		socket.close();
 	}

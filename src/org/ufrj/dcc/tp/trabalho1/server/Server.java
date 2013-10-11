@@ -29,26 +29,20 @@ public class Server {
 			while (true){
 				Socket clientSocket = serverSocket.accept();
 				System.out.println("[INFO] Connection estabilished with a client. ID: "+idCounter+". Connection from: "+clientSocket.getInetAddress());
-				ChatMessage joinedMessage = new ChatMessage(0, "ID<"+idCounter+"> acabou de se conectar!");
+				ChatMessage joinedMessage = new ChatMessage(0, "<ID:"+idCounter+"> acabou de se conectar!");
 				sendToConnectedClients(joinedMessage);
 				ClientMessageReceiverThread connectionManagerThread = new ClientMessageReceiverThread(idCounter++, this, clientSocket);
 				connectedClients.add(connectionManagerThread);
 				connectionManagerThread.start();
 			}
 		} catch (IOException e) {
-			System.out.println("[ERROR] Connection error");
+			System.out.println("[ERROR] Connection error. Port already in use?");
 		}
 	}
 
 	public void sendToConnectedClients(ChatMessage message) {
 		for (ClientMessageReceiverThread client : connectedClients) {
-			try {
-				PrintStream out = new PrintStream(client.getSocket().getOutputStream());
-				out.println(GSON.toJson(message));
-				out.close();
-			} catch (IOException e) {
-				System.out.println("[ERROR] Could not close PrintStream from client ID: "+client.getClientId());
-			}
+			client.getOut().println(GSON.toJson(message));
 		}
 	}
 
