@@ -3,6 +3,8 @@ package org.ufrj.dcc.tp.trabalho1.server;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -40,7 +42,8 @@ public class ClientMessageReceiverThread extends Thread {
 			try {
 				System.out.println("[INFO] TIMEOUT <ID:"+parentThread.getClientId()+">, Disconnecting client");
 				parentThread.sendDisconnectMessage();
-				parentThread.closeSocket();
+				parentThread.closeSocket();				
+				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -65,6 +68,14 @@ public class ClientMessageReceiverThread extends Thread {
 	public void sendDisconnectMessage() {
 		ChatMessage chatMessage = new ChatMessage(0, "<ID:"+clientId+"> foi desconectaco!", ChatMessage.PUBLIC_MESSAGE);
 		server.sendToConnectedClients(chatMessage);
+		
+		server.getConnectedClients().remove(this);
+		
+		List<Integer> ids = new ArrayList<Integer>();
+		for (ClientMessageReceiverThread client : server.getConnectedClients()) {
+			ids.add(client.getClientId());
+		}
+		server.sendToConnectedClients(new ListClientsMessage(ids));	
 	}
 
 	public PrintStream getOut() {
