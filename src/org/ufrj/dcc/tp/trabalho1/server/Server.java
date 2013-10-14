@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 
@@ -12,7 +14,7 @@ public class Server {
 	
 	private int port;
 	private ServerSocket serverSocket;
-	private List<ClientMessageReceiverThread> connectedClients = new ArrayList<ClientMessageReceiverThread>();
+	private Map<Integer, ClientMessageReceiverThread> connectedClients = new HashMap<Integer, ClientMessageReceiverThread>();
 	private static final Gson GSON = new Gson();
 	
 	public Server(int port){
@@ -34,12 +36,14 @@ public class Server {
 				sendToConnectedClients(joinedMessage);
 				
 								
-				ClientMessageReceiverThread connectionManagerThread = new ClientMessageReceiverThread(idCounter++, this, clientSocket);
-				connectedClients.add(connectionManagerThread);
+				ClientMessageReceiverThread connectionManagerThread = new ClientMessageReceiverThread(idCounter, this, clientSocket);
+				connectedClients.put(idCounter, connectionManagerThread);
 				connectionManagerThread.start();
 				
+				sendIdToClient(idCounter++);
+				
 				ids.clear();
-				for (ClientMessageReceiverThread client : connectedClients) {
+				for (ClientMessageReceiverThread client : connectedClients.values()) {
 					ids.add(client.getClientId());
 				}
 				
@@ -50,17 +54,31 @@ public class Server {
 		}
 	}
 
+	private void sendIdToClient(int id) {
+		Message message = new Message();
+		message.setType(Message.SET_ID);
+		message.setToId(id);
+		
+		getConnectedClients().get(id).getOut().println(GSON.toJson(message));
+	}
+
 	public void sendToConnectedClients(Message message) {
-		for (ClientMessageReceiverThread client : connectedClients) {
-			client.getOut().println(GSON.toJson(message));
+		for (ClientMessageReceiverThread client : connectedClients.values()) {
+			if (!(message.getType() == Message.PUBLIC_MESSAGE && message.getFromId() == client.getClientId())) {
+				client.getOut().println(GSON.toJson(message));
+			}	
 		}
 	}
 
-	public List<ClientMessageReceiverThread> getConnectedClients() {
+	public Map<Integer, ClientMessageReceiverThread> getConnectedClients() {
 		return connectedClients;
 	}
 
-	public void setConnectedClients(List<ClientMessageReceiverThread> connectedClients) {
+	public void setConnectedClients(Map<Integer, ClientMessageReceiverThread> connectedClients) {
 		this.connectedClients = connectedClients;
+	}
+
+	public void sendToConnectedClient(ChatMessage chatMessage) {
+		getConnectedClients().get(chatMessage.getToId()).getOut().println(GSON.toJson(chatMessage));
 	}
 }

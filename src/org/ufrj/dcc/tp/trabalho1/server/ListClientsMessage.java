@@ -6,7 +6,7 @@ public class ListClientsMessage  extends Message {
 	private List<Integer> clientsIds;
 
 	public ListClientsMessage(List<Integer> clientsIds) {
-		this.setType(Message.LIST_CLIENT);
+		this.setType(LIST_CLIENT);
 		this.clientsIds = clientsIds;
 	}
 	

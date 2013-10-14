@@ -16,7 +16,7 @@ public class ClientMessageReceiverThread extends Thread {
 	
 	private static final String GOODBYE_MSG = "EXIT";
 	private static final Gson GSON = new Gson();
-	private static final long TIME_TO_DISCONNECT_CLIENT = 45000;
+	private static final long TIME_TO_DISCONNECT_CLIENT = 15000;
 	
 	//Armazeno o servidor criador da thread para manipular a sua lista de clientes conectados, 
 	//alem de enviar uma mensagens a todos os clientes conectados
@@ -69,10 +69,10 @@ public class ClientMessageReceiverThread extends Thread {
 		ChatMessage chatMessage = new ChatMessage(0, "<ID:"+clientId+"> foi desconectaco!", ChatMessage.PUBLIC_MESSAGE);
 		server.sendToConnectedClients(chatMessage);
 		
-		server.getConnectedClients().remove(this);
+		server.getConnectedClients().remove(getClientId());
 		
 		List<Integer> ids = new ArrayList<Integer>();
-		for (ClientMessageReceiverThread client : server.getConnectedClients()) {
+		for (ClientMessageReceiverThread client : server.getConnectedClients().values()) {
 			ids.add(client.getClientId());
 		}
 		server.sendToConnectedClients(new ListClientsMessage(ids));	
@@ -128,8 +128,11 @@ public class ClientMessageReceiverThread extends Thread {
 							
 						} else {
 							chatMessage.setFromClientId(clientId);
+							
 							if (chatMessage.getType() == ChatMessage.PUBLIC_MESSAGE){
 								server.sendToConnectedClients(chatMessage);
+							} else {
+								server.sendToConnectedClient(chatMessage);
 							}
 						}
 					}
