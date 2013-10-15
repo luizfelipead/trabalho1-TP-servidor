@@ -3,10 +3,9 @@ package org.ufrj.dcc.tp.trabalho1.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import com.google.gson.Gson;
 
@@ -27,31 +26,31 @@ public class Server {
 			serverSocket = new ServerSocket(this.port);
 			System.out.println("[INFO] Server successfully started at "+serverSocket.getInetAddress().getHostAddress());
 			int idCounter = 1;
-			List<Integer> ids = new ArrayList<Integer>();
 			while (true){
 				Socket clientSocket = serverSocket.accept();
 				System.out.println("[INFO] Connection estabilished with a client. ID: "+idCounter+". Connection from: "+clientSocket.getInetAddress());
 				
-				ChatMessage joinedMessage = new ChatMessage(0, "<ID:"+idCounter+"> acabou de se conectar!", ChatMessage.PUBLIC_MESSAGE);
-				sendToConnectedClients(joinedMessage);
-				
-								
 				ClientMessageReceiverThread connectionManagerThread = new ClientMessageReceiverThread(idCounter, this, clientSocket);
 				connectedClients.put(idCounter, connectionManagerThread);
 				connectionManagerThread.start();
 				
 				sendIdToClient(idCounter++);
-				
-				ids.clear();
-				for (ClientMessageReceiverThread client : connectedClients.values()) {
-					ids.add(client.getClientId());
-				}
-				
-				sendToConnectedClients(new ListClientsMessage(ids));				
 			}
 		} catch (IOException e) {
 			System.out.println("[ERROR] Connection error. Port already in use?");
 		}
+	}
+
+	public void newClientConnected(String clientName) {
+		ChatMessage joinedMessage = new ChatMessage(0, "<"+clientName+"> acabou de se conectar!", ChatMessage.PUBLIC_MESSAGE);
+		sendToConnectedClients(joinedMessage);
+		
+		Map<Integer, String> clientsNames = new TreeMap<>();
+		for (ClientMessageReceiverThread client : connectedClients.values()) {
+			clientsNames.put(client.getClientId(), client.getClientName());
+		}
+		
+		sendToConnectedClients(new ListClientsMessage(clientsNames));
 	}
 
 	private void sendIdToClient(int id) {

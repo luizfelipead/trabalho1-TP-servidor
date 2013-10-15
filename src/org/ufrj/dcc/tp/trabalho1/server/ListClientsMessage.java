@@ -1,20 +1,21 @@
 package org.ufrj.dcc.tp.trabalho1.server;
 
-import java.util.List;
+import java.util.Map;
 
 public class ListClientsMessage  extends Message {
-	private List<Integer> clientsIds;
+	private Map<Integer, String> clientsIds;
 
-	public ListClientsMessage(List<Integer> clientsIds) {
+	public ListClientsMessage(Map<Integer, String> clientsIds) {
 		this.setType(LIST_CLIENT);
-		this.clientsIds = clientsIds;
+		this.setClientsIds(clientsIds);
 	}
-	
-	public List<Integer> getClientsIds() {
+
+	public Map<Integer, String> getClientsIds() {
 		return clientsIds;
 	}
 
-	public void setClientsIds(List<Integer> clientsIds) {
+	public void setClientsIds(Map<Integer, String> clientsIds) {
 		this.clientsIds = clientsIds;
 	}
+	
 }

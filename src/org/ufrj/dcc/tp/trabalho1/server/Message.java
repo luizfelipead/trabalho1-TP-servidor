@@ -10,6 +10,7 @@ public class Message {
 	public static final int PING = -1;
 	public static final int PUBLIC_MESSAGE = 0;
 	public static final int PRIVATE_MESSAGE = 1;
+	public static final int NAME_MESSAGE = 2;
 	
 	public static final int SERVER_ID = 0;
 	public static final int PING_ID = 0;
