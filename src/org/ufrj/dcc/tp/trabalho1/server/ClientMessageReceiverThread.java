@@ -3,11 +3,11 @@ package org.ufrj.dcc.tp.trabalho1.server;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 
 import com.google.gson.Gson;
 
@@ -23,6 +23,7 @@ public class ClientMessageReceiverThread extends Thread {
 	private Server server;
 	private Socket socket;
 	private int clientId;
+	private String clientName;
 	
 	private Scanner in;
 	private PrintStream out;
@@ -40,7 +41,7 @@ public class ClientMessageReceiverThread extends Thread {
 		@Override
 		public void run() {
 			try {
-				System.out.println("[INFO] TIMEOUT <ID:"+parentThread.getClientId()+">, Disconnecting client");
+				System.out.println("[INFO] TIMEOUT <ID:"+parentThread.getClientName()+">, Disconnecting client");
 				parentThread.sendDisconnectMessage();
 				parentThread.closeSocket();				
 				
@@ -66,16 +67,17 @@ public class ClientMessageReceiverThread extends Thread {
 	}
 	
 	public void sendDisconnectMessage() {
-		ChatMessage chatMessage = new ChatMessage(0, "<ID:"+clientId+"> foi desconectaco!", ChatMessage.PUBLIC_MESSAGE);
+		ChatMessage chatMessage = new ChatMessage(0, clientName + " foi desconectado!", ChatMessage.PUBLIC_MESSAGE);
 		server.sendToConnectedClients(chatMessage);
 		
 		server.getConnectedClients().remove(getClientId());
 		
-		List<Integer> ids = new ArrayList<Integer>();
+		Map<Integer, String> clientsNames = new TreeMap<>();
 		for (ClientMessageReceiverThread client : server.getConnectedClients().values()) {
-			ids.add(client.getClientId());
+			clientsNames.put(client.getClientId(), client.getClientName());
 		}
-		server.sendToConnectedClients(new ListClientsMessage(ids));	
+		
+		server.sendToConnectedClients(new ListClientsMessage(clientsNames));
 	}
 
 	public PrintStream getOut() {
@@ -119,21 +121,34 @@ public class ClientMessageReceiverThread extends Thread {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
+						
 						ChatMessage chatMessage = GSON.fromJson(message, ChatMessage.class);
-						if (chatMessage.getType() == ChatMessage.PING){
-							System.out.println("[DEBUG] Ping received from <ID:"+clientId+">");
-							timerToDisconnectClient.cancel();
-							timerToDisconnectClient = new Timer();
-							timerToDisconnectClient.schedule(new DisconnectTimerTask(this), TIME_TO_DISCONNECT_CLIENT, TIME_TO_DISCONNECT_CLIENT);
+						System.out.println("tipo: " + chatMessage.getType());
+						if (chatMessage.getType() == Message.NAME_MESSAGE) {
+							NameMessage nameMessage = GSON.fromJson(message, NameMessage.class);
 							
-						} else {
-							chatMessage.setFromClientId(clientId);
+							clientName = nameMessage.getMessage();
 							
-							if (chatMessage.getType() == ChatMessage.PUBLIC_MESSAGE){
-								server.sendToConnectedClients(chatMessage);
-							} else {
-								server.sendToConnectedClient(chatMessage);
+							System.out.println("Name: " + clientName);
+							
+							server.newClientConnected(clientName);
+						} else {							
+							if (chatMessage.getType() == ChatMessage.PING){
+								System.out.println("[DEBUG] Ping received from <ID:"+clientId+">");
+								timerToDisconnectClient.cancel();
+								timerToDisconnectClient = new Timer();
+								timerToDisconnectClient.schedule(new DisconnectTimerTask(this), TIME_TO_DISCONNECT_CLIENT, TIME_TO_DISCONNECT_CLIENT);
+								
 							}
+							else {
+								chatMessage.setFromClientId(clientId);
+								
+								if (chatMessage.getType() == ChatMessage.PUBLIC_MESSAGE){
+									server.sendToConnectedClients(chatMessage);
+								} else {
+									server.sendToConnectedClient(chatMessage);
+								}
+							}							
 						}
 					}
 				} catch (Exception e){
@@ -150,5 +165,11 @@ public class ClientMessageReceiverThread extends Thread {
 		socket.close();
 		timerToDisconnectClient.cancel();
 	}
+
+	
+	public String getClientName() {
+		return clientName;
+	}
+
 
 }
